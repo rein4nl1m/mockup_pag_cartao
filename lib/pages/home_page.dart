@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -37,14 +38,33 @@ class _HomePageState extends State<HomePage> {
   List<DropdownMenuItem<String>> _dropDropDownMeses;
   List<DropdownMenuItem<String>> _dropDropDownAnos;
 
-  String _mesVenc;
-  String _anoVenc;
+  String _mesVencAux;
+  String _anoVencAux;
+  String _mesVenc = "MM";
+  String _anoVenc = "AAAA";
+  String _numberCard = "#### #### #### ####";
+  String _titularCard = "Nome Completo";
+  String _cvvCard = "";
+  bool isCvvFocused = false;
+  FocusNode _cvvFocus = FocusNode();
 
   @override
   void initState() {
     _dropDropDownMeses = getDropDownMeses();
     _dropDropDownAnos = getDropDownAnos();
+    _cvvFocus.addListener(_onFocusChange);
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _cvvFocus.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    isCvvFocused = _cvvFocus.hasFocus;
+    debugPrint("Focus: " + _cvvFocus.hasFocus.toString());
   }
 
   List<DropdownMenuItem<String>> getDropDownMeses() {
@@ -109,6 +129,19 @@ class _HomePageState extends State<HomePage> {
                             labelText: "Número do Cartão",
                             border: OutlineInputBorder(),
                           ),
+                          keyboardType: TextInputType.numberWithOptions(),
+                          inputFormatters: [
+                            MaskedTextInputFormatter(
+                              mask: 'xxxx xxxx xxxx xxxx',
+                              separator: ' ',
+                            ),
+                          ],
+                          textInputAction: TextInputAction.next,
+                          onChanged: (text) {
+                            setState(() {
+                              _numberCard = text;
+                            });
+                          },
                         ),
                         SizedBox(
                           height: 10,
@@ -118,6 +151,12 @@ class _HomePageState extends State<HomePage> {
                             labelText: "Nome do Titular",
                             border: OutlineInputBorder(),
                           ),
+                          textInputAction: TextInputAction.next,
+                          onChanged: (text) {
+                            setState(() {
+                              _titularCard = text;
+                            });
+                          },
                         ),
                         SizedBox(
                           height: 10,
@@ -139,13 +178,13 @@ class _HomePageState extends State<HomePage> {
                                     children: <Widget>[
                                       DropdownButton(
                                         hint: Text("Mês"),
-                                        value: _mesVenc,
+                                        value: _mesVencAux,
                                         items: _dropDropDownMeses,
                                         onChanged: changeDropDownMes,
                                       ),
                                       DropdownButton(
                                         hint: Text("Ano"),
-                                        value: _anoVenc,
+                                        value: _anoVencAux,
                                         items: _dropDropDownAnos,
                                         onChanged: changeDropDownAno,
                                       ),
@@ -163,7 +202,20 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   TextField(
                                     decoration: InputDecoration(
-                                        border: OutlineInputBorder()),
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    focusNode: _cvvFocus,
+                                    inputFormatters: [
+                                      MaskedTextInputFormatter(
+                                        mask: 'xxx',
+                                        separator: ' ',
+                                      ),
+                                    ],
+                                    onChanged: (text) {
+                                      setState(() {
+                                        _cvvCard = text;
+                                      });
+                                    },
                                   )
                                 ],
                               ),
@@ -194,49 +246,14 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               Positioned(
-                top: 18,
+                top: MediaQuery.of(context).size.height * .03,
                 left: MediaQuery.of(context).size.width * .15,
                 child: Material(
                   elevation: 5,
                   borderRadius: BorderRadius.all(
                     Radius.circular(5),
                   ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(5),
-                      ),
-                      color: Colors.grey,
-                    ),
-                    padding: EdgeInsets.all(10),
-                    width: MediaQuery.of(context).size.width * .7,
-                    height: 150,
-                    child: Column(
-                      children: <Widget>[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            Container(
-                              width: 35,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(5),
-                                ),
-                                color: Colors.grey[200],
-                              ),
-                            ),
-                            Image.asset(
-                              "assets/images/logo.png",
-                              height: 50,
-                              width: 50,
-                              fit: BoxFit.fitWidth,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: isCvvFocused ? backCard() : frontCard(),
                 ),
               ),
             ],
@@ -246,15 +263,227 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget frontCard() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.all(
+          Radius.circular(5),
+        ),
+        color: Colors.grey,
+      ),
+      padding: EdgeInsets.all(10),
+      width: MediaQuery.of(context).size.width * .7,
+      height: 150,
+      child: Column(
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Container(
+                width: 35,
+                height: 30,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(5),
+                  ),
+                  color: Colors.grey[200],
+                ),
+              ),
+              Text(
+                "Visa",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                "$_numberCard",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  letterSpacing: 2,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                "Nome do Titular",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(),
+              Text(
+                "Vencimento",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 5),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                "$_titularCard",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+              ),
+              SizedBox(),
+              Text(
+                "$_mesVenc / $_anoVenc",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget backCard() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.all(
+          Radius.circular(5),
+        ),
+        color: Colors.grey,
+      ),
+      width: MediaQuery.of(context).size.width * .7,
+      height: 150,
+      child: Column(
+        children: <Widget>[
+          SizedBox(height: 15),
+          Container(
+            color: Colors.black,
+            height: 30,
+          ),
+          SizedBox(height: 25),
+          Padding(
+            padding: EdgeInsets.only(right: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                Text(
+                  "CVV",
+                  style: TextStyle(
+                    fontSize: 8,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.only(right: 5),
+                    alignment: Alignment.centerRight,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(5),
+                      ),
+                      color: Colors.white,
+                    ),
+                    height: 30,
+                    child: Text("$_cvvCard"),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 10),
+          Padding(
+            padding: EdgeInsets.only(right: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                Text(
+                  "Visa",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void changeDropDownMes(String mes) {
     setState(() {
-      _mesVenc = mes;
+      _mesVenc = _mesVencAux = mes;
     });
   }
 
   void changeDropDownAno(String ano) {
     setState(() {
-      _anoVenc = ano;
+      _anoVenc = _anoVencAux = ano;
     });
+  }
+}
+
+class MaskedTextInputFormatter extends TextInputFormatter {
+  final String mask;
+  final String separator;
+
+  MaskedTextInputFormatter({
+    @required this.mask,
+    @required this.separator,
+  }) {
+    assert(mask != null);
+    assert(separator != null);
+  }
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.length > 0) {
+      if (newValue.text.length > oldValue.text.length) {
+        if (newValue.text.length > mask.length) return oldValue;
+        if (newValue.text.length < mask.length &&
+            mask[newValue.text.length - 1] == separator) {
+          return TextEditingValue(
+            text:
+                '${oldValue.text}$separator${newValue.text.substring(newValue.text.length - 1)}',
+            selection: TextSelection.collapsed(
+              offset: newValue.selection.end + 1,
+            ),
+          );
+        }
+      }
+    }
+    return newValue;
   }
 }
